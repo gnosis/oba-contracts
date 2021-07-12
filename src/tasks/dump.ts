@@ -104,24 +104,23 @@ async function getDumpInstructions({
     );
   }
 
-  const dumpedTokens = Array.from(new Set(inputDumpedTokens));
   const toToken =
     toTokenAddress === undefined || toTokenAddress === BUY_ETH_ADDRESS
       ? nativeToken(hre)
       : await tokenDetails(toTokenAddress, hre);
 
   let transferToReceiver: TransferToReceiver | undefined = undefined;
-  const sameTokenIndex = dumpedTokens.findIndex(
-    (token) => token === (toTokenAddress ?? BUY_ETH_ADDRESS),
+  const dumpedTokens = Array.from(new Set(inputDumpedTokens)).filter(
+    (token) => token !== (toTokenAddress ?? BUY_ETH_ADDRESS),
   );
-  if (sameTokenIndex !== -1) {
-    dumpedTokens.splice(sameTokenIndex, 1);
-    if (hasCustomReceiver) {
-      transferToReceiver = {
-        token: toToken,
-        amount: await balanceOf(toToken, user),
-      };
-    }
+  if (
+    hasCustomReceiver &&
+    inputDumpedTokens.includes(toTokenAddress ?? BUY_ETH_ADDRESS)
+  ) {
+    transferToReceiver = {
+      token: toToken,
+      amount: await balanceOf(toToken, user),
+    };
   }
 
   const computedInstructions: (DumpInstruction | null)[] = (
